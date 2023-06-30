@@ -25,17 +25,20 @@ namespace PhotoGraph {
 		Pass() : output(NULL), tex(NULL) {}
 		template <class T>
 		void defineNode(std::string node_name) {
-			node_map_[node_name] = new T(this);
+			Node* node = new T();
+			node_map_[node_name] = node;
+			node->definePorts();
 		}
 		template <>
 		void defineNode<Node_Output>(std::string node_name) {
-			output = new Node_Output(this);
+			output = new Node_Output();
 			node_map_[node_name] = output;
+			output->definePorts();
 		}
 		template <class T>
 		T* getNode(std::string node_name) {
 			if (node_map_.find(node_name) != node_map_.end())
-				return node_map_[node_name];
+				return (T*)node_map_[node_name];
 			return NULL;
 		}
 		void bind(std::string output_node, std::string output_port, std::string input_node, std::string input_port) {

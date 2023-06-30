@@ -97,7 +97,7 @@ namespace PhotoGraph {
 				uv = getInput<Vec2f>("UV");
 			}
 			Texture* tex = getInput<Texture*>("Tex");
-			Color c = tex->get(uv.u * tex->getPixelHeight(), uv.v * tex->getPixelWidth());
+			Color c = tex->get(uv.u * tex->getPixelWidth(), uv.v * tex->getPixelHeight());
 			setOutput<Vec4f>("Out", Vec4f(c.r, c.g, c.b, c.a));
 		}
 	};
@@ -127,13 +127,31 @@ namespace PhotoGraph {
 		Node_RGB2Grayscale() {}
 		virtual void definePorts() {
 			defineInputPort<Vec4f>("In");
-			defineOutputPort<int>("Out");
+			defineOutputPort<float>("Out");
 		}
 		virtual void work(RuntimeInformation rinfo) {
 			Vec4f v = getInput<Vec4f>("In");
 			float t = 0.299 * v.r + 0.587 * v.g + 0.114 * v.b;
 			/*经验公式*/
-			setOutput<int>("Out", (int)t);
+			setOutput<float>("Out", t);
+		}
+	};
+
+
+	/*灰度转RGB 用于输出*/
+	class Node_Gray2RGB : public Node {
+	public:
+		Node_Gray2RGB() {}
+		virtual void definePorts() {
+			defineInputPort<float>("In");
+			defineOutputPort<Vec4f>("Out");
+		}
+		virtual void work(RuntimeInformation rinfo) {
+			float t = getInput<float>("In");
+			Vec4f v;
+			v.r = v.g = v.b = t;
+			v.a = 100;
+			setOutput<Vec4f>("Out", v);
 		}
 	};
 
@@ -143,34 +161,45 @@ namespace PhotoGraph {
 	public:
 		Node_Binarization() {}
 		virtual void definePorts() {
-			defineInputPort<int>("In");
-			defineOutputPort<int>("Out");
+			defineInputPort<float>("In");
+			defineOutputPort<float>("Out");
 		}
 		virtual void work(RuntimeInformation rinfo) {
-			int v = getInput<int>("In");
-			if (v > 127)  v = 255;
-			else v = 0;
-			setOutput<int>("Out", v);
+			float v = getInput<float>("In");
+			if (v > 127.0)  v = 255.0;
+			else v = 0.0;
+			setOutput<float>("Out", v);
 		}
 	};
 
-	/*平移 旋转  镜像翻转（要参数）*/
+	/*平移*/
 	class Node_Move : public Node {
+		private:
+		float X_Offset = 0.5;
+		float Y_Offset = 0.5;
+		//默认 前端可改
 	public:
 		Node_Move() {}
 
 		virtual void definePorts() {
-			defineInputPort<Vec4f>("In");
-			defineOutputPort<Vec4f>("Out");
+			defineInputPort<Vec2f>("UV");
+			defineOutputPort<Vec2f>("Out");
 		}
 		virtual void work(RuntimeInformation rinfo) {
-			Vec4f v = getInput<Vec4f>("In");
 
+			Vec2f input;
+			if (!isBinded("UV")) {
+				input = rinfo.uv0;
+			}
+			else {
+				input = getInput<Vec2f>("UV");
+			}
 
-			//保存成图片
-			//得到相对位置   从图片里找
+			Vec2f output; 
+			output.u= input.u - X_Offset;
+			output.v= input.v - Y_Offset;
 
-			setOutput<Vec4f>("Out", v);
+			setOutput<Vec2f>("Out", output);
 		}
 	};
 
@@ -178,7 +207,7 @@ namespace PhotoGraph {
 
 
 
-	/*透视变换 仿射变换*/
+	/*旋转  镜像翻转  透视变换 仿射变换*/
 
 
 	/*边缘检测 轮廓提取   */

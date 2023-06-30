@@ -29,7 +29,7 @@ public:
 		output = NULL; 
 	}
 	inline bool isBinded() { 
-		return output == NULL; 
+		return output != NULL; 
 	}
 	inline void bind(OutputPort<T>* port) {
 		this->output = port;

@@ -66,12 +66,12 @@ namespace PhotoGraph {
 			memcpy_s(data, pixelHeight * pixelWidth * bytespp, out.data, pixelHeight * pixelWidth * bytespp);
 		}
 		Color get(int x, int y) {
-			if (x < 0 || y < 0 || x >= pixelHeight || y >= pixelWidth)
+			if (x < 0 || y < 0 || x >= pixelWidth || y >= pixelHeight)
 				return Color();
 			return Color(data + (x + y * pixelWidth) * bytespp, bytespp);
 		}
 		bool set(int x, int y, Color& c) {
-			if (!data || x < 0 || y < 0 || x >= pixelHeight || y >= pixelWidth)
+			if (!data || x < 0 || y < 0 || x >= pixelWidth || y >= pixelHeight)
 				return 0;
 			memcpy(data + (x + y * pixelWidth) * bytespp, c.raw, bytespp);
 			return 1;
