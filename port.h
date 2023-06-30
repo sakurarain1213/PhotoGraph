@@ -28,7 +28,7 @@ public:
 	InputPort() {
 		output = NULL; 
 	}
-	inline bool isEmpty() { 
+	inline bool isBinded() { 
 		return output == NULL; 
 	}
 	inline void bind(OutputPort<T>* port) {
