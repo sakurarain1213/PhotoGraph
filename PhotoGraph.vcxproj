@@ -166,6 +166,7 @@
     <ClInclude Include="pass.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="project.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="vec.h" />
   </ItemGroup>
   <ItemGroup>
