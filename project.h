@@ -3,8 +3,9 @@
 #ifndef _PROJECT_H
 #define _PROJECT_H
 
-public class Project {
-	
-};
+namespace PhotoGraph {
+	class Project {
 
+	};
+}
 #endif
