@@ -100,6 +100,11 @@ public:
 
 /*灰度图二值化*/
 class Node_Binarization : public Node {
+
+private:
+	int m_Threshold; // 二值化阈值
+
+
 public:
 	Node_Binarization(Pass* p) : Node(p) {}
 	virtual void definePorts() {
@@ -108,8 +113,7 @@ public:
 	}
 	virtual void work() {
 		int v = getInput<int>("In");
-			if (v > 127)  v = 255;
-			else v = 0;
+		v > m_Threshold ? 255 : 0;
 		setOutput<int>("Out", v);
 	}
 };
