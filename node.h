@@ -29,6 +29,9 @@ namespace PhotoGraph {
 		inline void setOutput(std::string port_name, T value) {
 			return opm.setOutput<T>(port_name, value);
 		}
+		inline bool isBinded(std::string port_name) {
+			return ipm.getInputPort<int>(port_name)->isBinded();
+		}
 		template <typename T>
 		inline void defineInputPort(std::string port_name) {
 			ipm.defineInputPort<T>(port_name);
@@ -62,6 +65,40 @@ namespace PhotoGraph {
 		virtual void work(RuntimeInformation rinfo) {
 			Vec4f in = getInput<Vec4f>("In");
 			c = Color(in.r, in.g, in.b, in.a);
+		}
+	};
+
+	class Node_Texture : public Node {
+	public:
+		Texture* tex;
+		Node_Texture() {}
+		virtual void definePorts() {
+			defineOutputPort<Texture*>("Tex");
+		}
+		virtual void work(RuntimeInformation rinfo) {
+			setOutput<Texture*>("Tex", tex);
+		}
+	};
+
+	class Node_Sample_Texture : public Node {
+	public:
+		Node_Sample_Texture() {}
+		virtual void definePorts() {
+			defineInputPort<Texture*>("Tex");
+			defineInputPort<Vec2f>("UV");
+			defineOutputPort<Vec4f>("Out");
+		}
+		virtual void work(RuntimeInformation rinfo) {
+			Vec2f uv;
+			if (!isBinded("UV")) {
+				uv = rinfo.uv0;
+			}
+			else {
+				uv = getInput<Vec2f>("UV");
+			}
+			Texture* tex = getInput<Texture*>("Tex");
+			Color c = tex->get(uv.u * tex->getPixelHeight(), uv.v * tex->getPixelWidth());
+			setOutput<Vec4f>("Out", Vec4f(c.r, c.g, c.b, c.a));
 		}
 	};
 

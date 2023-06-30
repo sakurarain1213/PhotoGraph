@@ -75,6 +75,7 @@ namespace PhotoGraph {
 					tex->set(x, y, output->c);
 				}
 		}
+		inline Texture* getTexture() { return tex; }
 	};
 }
 
