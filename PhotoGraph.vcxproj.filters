@@ -36,6 +36,9 @@
     <ClInclude Include="vec.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -53,10 +56,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="D:\OpenCV4.5.4\opencv\build\x64\vc15\bin\opencv_world454.dll">
-      <Filter>资源文件</Filter>
+      <Filter>源文件</Filter>
     </None>
     <None Include="D:\OpenCV4.5.4\opencv\build\x64\vc15\bin\opencv_world454d.dll">
-      <Filter>资源文件</Filter>
+      <Filter>源文件</Filter>
     </None>
   </ItemGroup>
 </Project>
