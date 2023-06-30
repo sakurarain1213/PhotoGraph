@@ -51,4 +51,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\OpenCV4.5.4\opencv\build\x64\vc15\bin\opencv_world454.dll">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="D:\OpenCV4.5.4\opencv\build\x64\vc15\bin\opencv_world454d.dll">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>

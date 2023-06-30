@@ -13,12 +13,5 @@ int main() {
 	waitKey(0);
 	*/
 
-	Mat src = imread("C:\\Users\\w1625\\Desktop\\computer_picture\\0.jpg");
-	
-
-
-
-
-
 	return 0;
 }
