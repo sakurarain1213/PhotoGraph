@@ -19,11 +19,13 @@ namespace PhotoGraph {
 	private:
 		std::map<std::string, Node*> node_map_;
 		std::vector<Node*> node_sequence_;
+		//两者size不同说明有环
 		Node_Output* output;
 		Texture* tex;
 	public:
 		Pass() : output(NULL), tex(NULL) {}
 		template <class T>
+
 		void defineNode(std::string node_name) {
 			Node* node = new T();
 			node_map_[node_name] = node;
@@ -79,6 +81,14 @@ namespace PhotoGraph {
 				}
 		}
 		inline Texture* getTexture() { return tex; }
+
+		
+		bool isValid() {
+			if (node_map_.size() == node_sequence_.size()) return true;
+			else return false;
+		}
+
+
 	};
 }
 

@@ -52,6 +52,8 @@ namespace PhotoGraph {
 		int pixelHeight;
 		int pixelWidth;
 		unsigned char bytespp;
+		Vec4f averageRGB;
+
 	public:
 		Texture(int height = 1, int width = 1, int bytespp = 3) : pixelHeight(height), pixelWidth(width), bytespp(bytespp) {
 			data = new unsigned char[height * width * bytespp];
@@ -64,6 +66,7 @@ namespace PhotoGraph {
 			bytespp = out.channels();
 			data = new unsigned char[pixelHeight * pixelWidth * bytespp];
 			memcpy_s(data, pixelHeight * pixelWidth * bytespp, out.data, pixelHeight * pixelWidth * bytespp);
+			averageRGB = calculateAverageRGB();
 		}
 		Color get(int x, int y) {
 			if (x < 0 || y < 0 || x >= pixelWidth || y >= pixelHeight)
@@ -89,6 +92,31 @@ namespace PhotoGraph {
 		inline int getPixelWidth() { return pixelWidth; }
 		inline int getBytespp() { return bytespp; }
 		inline unsigned char* getData() { return data; }
+
+		Vec4f calculateAverageRGB() {
+			Vec4f avg(0, 0, 0, 0);
+			int count = pixelWidth * pixelHeight;
+				
+			for (int i = 0; i < pixelWidth; i++) {
+				for (int j = 0; j < pixelHeight; j++) {
+					unsigned char * p=data + (i + j * pixelWidth) * bytespp;
+					avg[0] += p[0];
+					avg[1] += p[1];
+					avg[2] += p[2];
+				}
+			}
+			if (count > 0) {
+				avg[0] /= count;
+				avg[1] /= count;
+				avg[2] /= count;
+			}
+			return avg;
+		}
+		Vec4f getAverageRGB() {
+			return averageRGB;
+		}
+
+
 	};
 }
 
