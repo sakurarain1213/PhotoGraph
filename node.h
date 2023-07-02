@@ -8,6 +8,7 @@
 #include "texture.h"
 #include <set>
 #include <random>
+#include <sstream>
 
 namespace PhotoGraph {
 	class Pass;
@@ -44,8 +45,10 @@ namespace PhotoGraph {
 	public:
 		virtual void definePorts() {} /*在这个函数中定义输入端口和输出端口*/
 		virtual void work(RuntimeInformation rinfo) {} /*定义具体操作*/
+		virtual void setAttributes(vector<string>ss ){}
 		std::set<Node*> binded_set;
 		std::set<Node*> dependency_set;
+		Node(vector<string> ss) { definePorts(); }
 		Node() { definePorts(); }
 		void bind(std::string output_port, Node* input_node, std::string input_port) {
 			input_node->ipm.getInputPort<int>(input_port)->bind(opm.getOutputPort<int>(output_port));
@@ -60,6 +63,15 @@ namespace PhotoGraph {
 		int height;
 		Color c; /*表示最后的输出结果*/
 		Node_Output() {}
+		virtual void setAttributes(vector<std::string>ss) {
+			float w, h;
+			sscanf_s(ss[0].c_str(), "%f", &w);
+			sscanf_s(ss[1].c_str(), "%f", &h);
+			width = (int)w;
+			height = (int)h;
+		}
+
+
 		virtual void definePorts() {
 			defineInputPort<Vec4f>("In");
 		}
@@ -73,6 +85,11 @@ namespace PhotoGraph {
 	public:
 		Texture* tex;
 		Node_Texture() {}
+		virtual void setAttributes(std::vector<std::string> ss) {
+			tex = new Texture (ss[0]);
+
+		}
+
 		virtual void definePorts() {
 			defineOutputPort<Texture*>("Tex");
 		}
@@ -118,11 +135,6 @@ namespace PhotoGraph {
 	};
 	*/
 
-
-
-
-
-
 	/*RGB翻转*/
 	class Node_Inverse : public Node {
 	public:
@@ -147,6 +159,11 @@ namespace PhotoGraph {
 		float contrast=0.05;  //+-0.1
 	public:
 		Node_AdjustContrast() {}
+
+		virtual void setAttributes(vector<string>ss) {
+			contrast = stof(ss[0]);
+		}
+
 		virtual void definePorts() {
 			defineInputPort<Vec4f>("In");
 			defineInputPort<Texture*>("TexIn");
@@ -155,6 +172,8 @@ namespace PhotoGraph {
 		virtual void work(RuntimeInformation rinfo) {
 			Vec4f inputColor = getInput<Vec4f>("In");
 			Texture* Tex = getInput<Texture*>("TexIn");
+
+
 
 			Vec4f adjustedColor;
 			Vec4f avg= Tex->getAverageRGB();
@@ -179,6 +198,9 @@ namespace PhotoGraph {
 		float saturation=1.05;   //0~1变灰  1+过饱和
 	public:
 		Node_Saturation() {}
+		virtual void setAttributes(vector<string>ss) {
+			saturation = stof(ss[0]);
+		}
 		virtual void definePorts() {
 			defineInputPort<Vec4f>("In");
 			defineOutputPort<Vec4f>("Out");
@@ -245,15 +267,23 @@ namespace PhotoGraph {
 
 	/*灰度图二值化*/
 	class Node_Binarization : public Node {
+	private:
+		float threshold=127;
 	public:
 		Node_Binarization() {}
+
+		virtual void setAttributes(vector<string>ss) {
+			threshold = stof(ss[0]);
+		}
+
+
 		virtual void definePorts() {
 			defineInputPort<float>("In");
 			defineOutputPort<float>("Out");
 		}
 		virtual void work(RuntimeInformation rinfo) {
 			float v = getInput<float>("In");
-			if (v > 127.0)  v = 255.0;
+			if (v > threshold)  v = 255.0;
 			else v = 0.0;
 			setOutput<float>("Out", v);
 		}
@@ -267,6 +297,11 @@ namespace PhotoGraph {
 		//默认 前端可改
 	public:
 		Node_Move() {}
+
+		virtual void setAttributes(vector<string>ss) {
+			X_Offset = stof(ss[0]);
+			sscanf_s(ss[1].c_str(), "%f", &Y_Offset);//等价 string to float
+		}
 
 		virtual void definePorts() {
 			defineInputPort<Vec2f>("UV");
@@ -288,19 +323,62 @@ namespace PhotoGraph {
 	};
 
 
-	/*矩阵乘算 不传UV  权值为0  提取值方向的花纹   权值+ 高亮曝光*/
-	class Node_Matrix3_Test : public Node {
+	class Node_Matrix3 : public Node {
 	private:
+		float f1 = 0;   float f2 = -2;   float f3 = 0;
+		float f4 = 0;   float f5 = 4;   float f6 = 0;
+		float f7 = 0;   float f8 = -2;   float f9 = 0;
 		Matrix3x3 operat;
-		float f1=0;   float f2=-2;   float f3=0;
-		float f4=0;   float f5=4;   float f6=0;
-		float f7=0;   float f8=-2;   float f9=0;
 
 	public:
-		Node_Matrix3_Test() {}
+		Node_Matrix3() {}
+		virtual void setAttributes(vector<string>ss) {
+			//string转float
+			f1 = stof(ss[0]);
+			f2 = stof(ss[1]);
+			f3 = stof(ss[2]);
+			f4 = stof(ss[3]);
+			f5 = stof(ss[4]);
+			f6 = stof(ss[5]);
+			f7 = stof(ss[6]);
+			f8 = stof(ss[7]);
+			f9 = stof(ss[8]);
+		}
+
+
+		virtual void definePorts() {
+			defineOutputPort<Matrix3x3>("Out");
+		}
+
+		virtual void work(RuntimeInformation rinfo) {
+			initialM(f1, f2, f3,
+				f4, f5, f6,
+				f7, f8, f9
+			);
+			setOutput <Matrix3x3 >("Out", operat);
+		}
+
+		virtual void initialM(float f1, float f2, float f3, float f4, float f5, float f6, float f7, float f8, float f9) {
+			operat.raw[0][0] = f1; operat.raw[0][1] = f2; operat.raw[0][2] = f3;
+			operat.raw[1][0] = f4; operat.raw[1][1] = f5; operat.raw[1][2] = f6;
+			operat.raw[2][0] = f7; operat.raw[2][1] = f8; operat.raw[2][2] = f9;
+		}
+
+	};
+
+
+
+
+
+	/*矩阵乘算 不传UV  权值为0  提取值方向的花纹   权值+ 高亮曝光*/
+	class Node_Matrix3_Sample : public Node {
+
+	public:
+		Node_Matrix3_Sample() {}
 		virtual void definePorts() {
 			defineInputPort<Texture*>("Tex");
 			defineInputPort<Vec2f>("UV");
+			defineInputPort<Matrix3x3>("Mat");
 			defineOutputPort<Vec4f>("Out");
 		}
 		virtual void work(RuntimeInformation rinfo) {
@@ -313,19 +391,11 @@ namespace PhotoGraph {
 			
 			Vec4f output;
 			
-			/*M initial
-			for (int i = 0; i < 3; i++) {
-				for (int j = 0; j < 3; j++) {
-					operat.raw[i][j] = 1.0;
-				}
-			}*/
-			initialM(f1, f2, f3,
-					f4, f5, f6,
-					f7, f8, f9
-			);
+
+			Matrix3x3 operat;
+			operat=getInput<Matrix3x3>("Mat");
 
 			std::vector<Color> colors;
-			/*colors  012  345  678*/
 
 			for (int i = -1; i <= 1; i++) {
 				for (int j = -1; j <= 1; j++) {
@@ -365,11 +435,7 @@ namespace PhotoGraph {
 			setOutput <Vec4f> ("Out", output);
 			
 		}
-		virtual void initialM(float f1, float f2, float f3, float f4, float f5, float f6, float f7, float f8, float f9) {
-			operat.raw[0][0] = f1; operat.raw[0][1] = f2; operat.raw[0][2] = f3;
-			operat.raw[1][0] = f4; operat.raw[1][1] = f5; operat.raw[1][2] = f6;
-			operat.raw[2][0] = f7; operat.raw[2][1] = f8; operat.raw[2][2] = f9;
-		}
+		
 	
 	};
 
@@ -468,10 +534,17 @@ namespace PhotoGraph {
 		float p = 0.05;//噪声概率
 	public:
 		Node_SaltAndPepperNoise() {}
+
+		virtual void setAttributes(vector<string>ss) {
+			sscanf_s(ss[0].c_str(), "%f", p);
+		}
+
+
 		virtual void definePorts() {
-			defineInputPort<Texture*>("Tex");
+			defineInputPort<Vec4f>("In");
 			defineInputPort<Vec2f>("UV");
 			defineOutputPort<Vec4f>("Out");
+			
 		}
 	
 		void addSaltAndPepperNoise(Vec4f &c, float saltProbability, float pepperProbability) {
@@ -502,12 +575,14 @@ namespace PhotoGraph {
 			else {
 				uv = getInput<Vec2f>("UV");
 			}
-			Texture* tex = getInput<Texture*>("Tex");
+
+			Vec4f input=getInput<Vec4f>("In");
 			Vec4f output;
-			Color c = tex->get(uv.u * tex->getPixelWidth(), uv.v * tex->getPixelHeight());
-			output.r = c.raw[0]; output.g = c.raw[1]; output.b = c.raw[2];
+
+			output.r=input.r; output.g = input.g; output.b = input.b;
+		
 			addSaltAndPepperNoise(output, p, p); // 加 p概率的椒盐噪声
-			output.a = c.a;
+			output.a = 100;
 			setOutput<Vec4f>("Out", output);
 		}
 
@@ -578,7 +653,10 @@ namespace PhotoGraph {
 	private:
 		float scale = 1.0;// 噪声尺度
 	public:
-		Node_PerlinNoise() {}
+		Node_PerlinNoise(vector<string> ss) {}
+		virtual void setAttributes(vector<string>ss) {
+			sscanf_s(ss[0].c_str(), "%f", scale);
+		}
 
 		virtual void definePorts() {
 			defineInputPort<Vec2f>("UV");
@@ -623,6 +701,9 @@ namespace PhotoGraph {
 		int core=3; //2*core+1即卷积核边长
 	public:
 		Node_Dilation() {}
+		virtual void setAttributes(vector<string>ss) {
+			sscanf_s(ss[0].c_str(), "%f", core);
+		}
 		virtual void definePorts() {
 			defineInputPort<Texture*>("Tex");
 			defineInputPort<Vec2f>("UV");
@@ -675,7 +756,11 @@ namespace PhotoGraph {
 	private:
 		int core = 3; // 2*core+1即卷积核边长
 	public:
-		Node_Erosion() {}
+		Node_Erosion(){}
+
+		virtual void setAttributes(vector<string>ss) {
+			sscanf_s(ss[0].c_str(), "%f", core);
+		}
 		virtual void definePorts() {
 			defineInputPort<Texture*>("Tex");
 			defineInputPort<Vec2f>("UV");
@@ -731,6 +816,10 @@ namespace PhotoGraph {
 		int core = 1; // 2*core+1即卷积核边长
 	public:
 		Node_EdgeDetection() {}
+		virtual void setAttributes(vector<string>ss) {
+			sscanf_s(ss[0].c_str(), "%f", core);
+		}
+
 		virtual void definePorts() {
 			defineInputPort<Texture*>("Tex");
 			defineInputPort<Vec2f>("UV");
@@ -776,28 +865,82 @@ namespace PhotoGraph {
 	};
 
 
+	//以下是数学类
 
-
-
-	class Math_Node : public Node {
+	/*less equal*/
+	class Node_floatLE : public Node {
 	public:
-		Math_Node() {}
-		// 共享的功能或属性
-		void computeAllNodes() {
-			// 遍历所有绑定的数学节点 依次执行它们的计算
-			for (Node* node : binded_set) {
-				Math_Node* mathNode = dynamic_cast<Math_Node*>(node);
-				if (mathNode) {
-					mathNode->compute();
-				}
-			}
+		virtual void definePorts() {
+			defineInputPort<float>("In1");
+			defineInputPort<float>("In2");
+			defineOutputPort<float>("Out");
 		}
-		//虚方法 执行数学节点的计算
-		virtual void compute() = 0;
+		virtual void  work(RuntimeInformation rinfo) {
+
+			float f1 = getInput<float>("In1");
+			float f2 = getInput<float>("In1");
+			float output;
+			if (f1 <= f2) output = f1;
+			else  output = f2;
+			setOutput<float>("Out", output);
+		}
 	};
 
+	/*less */
+	class Node_floatL : public Node {
+	public:
+		virtual void definePorts() {
+			defineInputPort<float>("In1");
+			defineInputPort<float>("In2");
+			defineOutputPort<float>("Out");
+		}
+		virtual void  work(RuntimeInformation rinfo) {
+
+			float f1 = getInput<float>("In1");
+			float f2 = getInput<float>("In1");
+			float output;
+			if (f1 < f2) output = f1;
+			else  output = f2;
+			setOutput<float>("Out", output);
+		}
+	};
+
+
+	//abs
+	class Node_floatABS : public Node {
+	public:
+		virtual void definePorts() {
+			defineInputPort<float>("In");
+			defineOutputPort<float>("Out");
+		}
+		virtual void  work(RuntimeInformation rinfo) {
+			float f = getInput<float>("In");
+			setOutput<float>("Out", abs(f));
+		}
+	};
+
+	//range
+	class Node_Range : public Node {
+	private:
+		float min=0;
+		float max=255;
+	public:
+		virtual void definePorts() {
+			defineInputPort<float>("In");
+			defineOutputPort<float>("Out");
+		}
+		virtual void  work(RuntimeInformation rinfo) {
+			float f = getInput<float>("In");
+
+			if (f < min) f = min;
+			else if (f > max) f = max;
+			setOutput<float>("Out", abs(f));
+		}
+	};
+
+
 	/*无参生成随机float*/
-	class Node_RandomFloat : public Math_Node {
+	class Node_RandomFloat : public Node {
 	public:
 		virtual void definePorts() {
 			defineOutputPort<float>("Out");
@@ -811,7 +954,7 @@ namespace PhotoGraph {
 	};
 
 	/*float*Vec4f*/
-	class Node_floatXVec4f : public Math_Node {
+	class Node_floatXVec4f : public Node {
 	public:
 		virtual void definePorts() {
 			defineInputPort<Vec4f>("Vec4fIn");
@@ -848,7 +991,7 @@ namespace PhotoGraph {
 	};
 
 	/*Vec4f*Matrix*/
-	class Node_Vec4fXMatrix : public Math_Node {
+	class Node_Vec4fXMatrix : public Node {
 	public:
 		virtual void definePorts() {
 			defineInputPort<Vec4f>("Vec4fIn");
@@ -868,6 +1011,7 @@ namespace PhotoGraph {
 	};
 
 
+
 	/*通道混合
 	Mat dst = Mat::zeros(image.size(), image.type());
 	int ft[] = { 0,2,1,1,2,0 };//互换1、3通道
@@ -878,24 +1022,19 @@ namespace PhotoGraph {
 
 	/*旋转  镜像翻转  透视变换 仿射变换*/
 
-
-
-
-
-
 	/*锐化     */
 
 
 	/*滤波器节点：实现各种图像滤波器，如均值滤波、高斯滤波、中值滤波等。
-	边缘检测节点：实现边缘检测算法，如Sobel算子、Canny算子等。
-	调整亮度/对比度节点：通过调整图像的亮度和对比度来改变图像的外观。
-	调整色彩节点：实现颜色校正、色彩平衡、饱和度调整等功能。
-	图像变换节点：实现图像的旋转、缩放、翻转等变换操作。
-	形态学处理节点：实现膨胀、腐蚀、开运算、闭运算等形态学处理操作。
+
 	图像分割节点：实现图像分割算法，如阈值分割、区域生长、边界提取等。
 	特征提取节点：实现图像特征提取算法，如角点检测、边缘提取、纹理特征等。
 	频域处理节点：实现傅里叶变换、频域滤波、频域特征提取等频域处理操作。
-	图像合成节点：实现图像合成算法，如图像融合、图像蒙版、图像叠加等。
+
+
+
+
+
 	*/
 
 

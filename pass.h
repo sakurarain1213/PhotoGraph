@@ -24,16 +24,20 @@ namespace PhotoGraph {
 		Texture* tex;
 	public:
 		Pass() : output(NULL), tex(NULL) {}
-		template <class T>
-
-		void defineNode(std::string node_name) {
+		void check() {
+			cout << output << endl;
+		}
+		template <class T> 
+		void defineNode(std::string node_name, vector<string>ss) {
 			Node* node = new T();
+			node->setAttributes(ss);
 			node_map_[node_name] = node;
 			node->definePorts();
 		}
 		template <>
-		void defineNode<Node_Output>(std::string node_name) {
+		void defineNode<Node_Output>(std::string node_name,vector<string>ss) {
 			output = new Node_Output();
+			output->setAttributes(ss);
 			node_map_[node_name] = output;
 			output->definePorts();
 		}
@@ -69,6 +73,7 @@ namespace PhotoGraph {
 		void work() throw(NoOutputNodeException) {
 			if (output == NULL) throw NoOutputNodeException();
 			RuntimeInformation rinfo;
+			cout << output->height << ' ' << output->width << endl;
 			tex = new Texture(output->height, output->width, RGBA);
 			for (int x = 0; x < output->width; ++x)
 				for (int y = 0; y < output->height; ++y) {

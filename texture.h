@@ -59,7 +59,7 @@ namespace PhotoGraph {
 			data = new unsigned char[height * width * bytespp];
 			memset(data, 0xff, height * width * bytespp * sizeof(unsigned char));
 		}
-		Texture(const char* filename) {
+		Texture(std::string filename) {
 			Mat out = imread(filename);
 			pixelHeight = out.rows;
 			pixelWidth = out.cols;
